@@ -1,20 +1,24 @@
-RootView = require 'views/core/RootView'
+RootVue = require 'views/core/RootVue'
 template = require 'templates/base-flat'
 SkippedContacts = require 'collections/SkippedContacts'
 User = require 'models/User'
 require('vendor/co')
+# TODO: Include vue, vuex in vendor
 require('vendor/vue')
 require('vendor/vuex')
 
 skippedContactApi =
   setArchived: (_id, archived) ->
-    $.ajax({
-      url: '/db/skipped-contact/' + _id
-      type: 'PUT'
-      data: {
-        _id
-        archived
-      }
+    # TODO: Set up a shim which will handle credentials, headers by default
+    # TODO: Move this to a general API folder
+    body = new FormData()
+    payload = { _id, archived }
+    body.append("json", JSON.stringify( payload ) )
+    fetch('/db/skipped-contact/' + _id, { 
+      method: 'PUT',
+      body: JSON.stringify(payload),
+      credentials: 'include'
+      headers: {'content-type':'application/json'}
     })
 
 SkippedContactInfo =
@@ -84,11 +88,11 @@ SkippedContactInfo =
   methods:
     onClickArchiveContact: (e) ->
       archived = true
-      @$store.dispatch('archiveContact', {@skippedContact, archived})
+      @$store.dispatch('page/archiveContact', {@skippedContact, archived})
       # @$emit('archiveContact', @skippedContact, archived)
     onClickUnarchiveContact: (e) ->
       archived = false
-      @$store.dispatch('archiveContact', {@skippedContact, archived})
+      @$store.dispatch('page/archiveContact', {@skippedContact, archived})
       # @$emit('archiveContact', @skippedContact, archived)
 
 SkippedContactsComponent = Vue.extend
@@ -98,8 +102,8 @@ SkippedContactsComponent = Vue.extend
     showArchived: false
   computed:
     _.assign({},
-      Vuex.mapState(['skippedContacts', 'users']),
-      Vuex.mapGetters(['numArchivedUsers']),
+      Vuex.mapState('page', ['skippedContacts', 'users']),
+      Vuex.mapGetters('page', ['numArchivedUsers']),
       sortedContacts: (state) ->
         switch state.sortOrder
           when 'date (ascending)'
@@ -121,21 +125,26 @@ SkippedContactsComponent = Vue.extend
     skippedContacts = new SkippedContacts()
     yield skippedContacts.fetch()
     skippedContacts = skippedContacts.toJSON()
-    @$store.commit('loadContacts', skippedContacts)
+    @$store.commit('page/loadContacts', skippedContacts)
     yield skippedContacts.map co.wrap (skippedContact) =>
       user = new User({ _id: skippedContact.trialRequest.applicant })
       index = _.findIndex(@skippedContacts, (s) -> s._id is skippedContact._id)
       yield user.fetch()
-      @$store.commit('addUser', { skippedContact , user: user.toJSON() })
+      @$store.commit('page/addUser', { skippedContact , user: user.toJSON() })
 
-module.exports = class SkippedContactsView extends RootView
+store = require('core/store')
+
+module.exports = class SkippedContactsView extends RootVue
   id: 'skipped-contacts-view'
   template: template
+  VueComponent: SkippedContactsComponent
 
   initialize: ->
     super(arguments...)
     # Vuex Store
-    @store = new Vuex.Store({
+    # TODO: Have RootVue handle a given 'page' module
+    module = {
+      namespaced: true
       state:
         skippedContacts: []
         users: {}
@@ -156,14 +165,8 @@ module.exports = class SkippedContactsView extends RootView
       getters:
         numArchivedUsers: (state) ->
           _.countBy(state.skippedContacts, (contact) -> contact.archived)[true]
-    })
+    }
+    store.registerModule('page', module)
 
-
-  afterRender: ->
-    @vueComponent?.$destroy() # TODO: Don't recreate this component every time things update
-    @vueComponent = new SkippedContactsComponent({
-      el: @$el.find('#site-content-area')[0]
-      store: @store
-    })
-
-    super(arguments...)
+  destroy: ->
+    store.unregisterModule('page')
