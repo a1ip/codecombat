@@ -138,35 +138,25 @@ module.exports = class SkippedContactsView extends RootVue
   id: 'skipped-contacts-view'
   template: template
   VueComponent: SkippedContactsComponent
-
-  initialize: ->
-    super(arguments...)
-    # Vuex Store
-    # TODO: Have RootVue handle a given 'page' module
-    module = {
-      namespaced: true
-      state:
-        skippedContacts: []
-        users: {}
-      actions:
-        archiveContact: ({ commit, state }, {skippedContact, archived}) ->
-          skippedContactApi.setArchived(skippedContact._id, archived).then ->
-            commit('archiveContact', {skippedContact, archived})
-      strict: not application.isProduction()
-      mutations:
-        archiveContact: (state, { skippedContact, archived }) ->
-          index = _.findIndex(state.skippedContacts, (s) -> s._id is skippedContact._id)
-          oldContact = state.skippedContacts[index]
-          Vue.set(state.skippedContacts, index, _.assign({}, oldContact, { archived }))
-        addUser: (state, { skippedContact, user }) ->
-          Vue.set(state.users, skippedContact._id, user)
-        loadContacts: (state, skippedContacts) ->
-          state.skippedContacts = skippedContacts
-      getters:
-        numArchivedUsers: (state) ->
-          _.countBy(state.skippedContacts, (contact) -> contact.archived)[true]
-    }
-    store.registerModule('page', module)
-
-  destroy: ->
-    store.unregisterModule('page')
+  vuexModule: -> {
+    namespaced: true
+    state:
+      skippedContacts: []
+      users: {}
+    actions:
+      archiveContact: ({ commit, state }, {skippedContact, archived}) ->
+        skippedContactApi.setArchived(skippedContact._id, archived).then ->
+          commit('archiveContact', {skippedContact, archived})
+    mutations:
+      archiveContact: (state, { skippedContact, archived }) ->
+        index = _.findIndex(state.skippedContacts, (s) -> s._id is skippedContact._id)
+        oldContact = state.skippedContacts[index]
+        Vue.set(state.skippedContacts, index, _.assign({}, oldContact, { archived }))
+      addUser: (state, { skippedContact, user }) ->
+        Vue.set(state.users, skippedContact._id, user)
+      loadContacts: (state, skippedContacts) ->
+        state.skippedContacts = skippedContacts
+    getters:
+      numArchivedUsers: (state) ->
+        _.countBy(state.skippedContacts, (contact) -> contact.archived)[true]
+  }
