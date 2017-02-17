@@ -6,19 +6,14 @@ require('vendor/co')
 # TODO: Include vue, vuex in vendor
 require('vendor/vue')
 require('vendor/vuex')
+fetch = require 'core/api/fetch'
 
 skippedContactApi =
   setArchived: (_id, archived) ->
-    # TODO: Set up a shim which will handle credentials, headers by default
     # TODO: Move this to a general API folder
-    body = new FormData()
-    payload = { _id, archived }
-    body.append("json", JSON.stringify( payload ) )
     fetch('/db/skipped-contact/' + _id, { 
       method: 'PUT',
-      body: JSON.stringify(payload),
-      credentials: 'include'
-      headers: {'content-type':'application/json'}
+      json: { _id, archived }
     })
 
 SkippedContactInfo =
