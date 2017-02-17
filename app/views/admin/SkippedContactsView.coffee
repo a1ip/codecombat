@@ -1,12 +1,10 @@
 RootVue = require 'views/core/RootVue'
 template = require 'templates/base-flat'
-SkippedContacts = require 'collections/SkippedContacts'
-User = require 'models/User'
 require('vendor/co')
 # TODO: Include vue, vuex in vendor
 require('vendor/vue')
 require('vendor/vuex')
-fetch = require 'core/api/fetch'
+api = require 'core/api'
 
 skippedContactApi =
   setArchived: (_id, archived) ->
@@ -117,15 +115,14 @@ SkippedContactsComponent = Vue.extend
   components:
     'skipped-contact-info': SkippedContactInfo
   created: co.wrap ->
-    skippedContacts = new SkippedContacts()
-    yield skippedContacts.fetch()
-    skippedContacts = skippedContacts.toJSON()
+    # TODO: Figure out how to generally handle network errors
+    skippedContacts = yield api.skippedContacts.fetchAll().then((r) -> r.json())
     @$store.commit('page/loadContacts', skippedContacts)
     yield skippedContacts.map co.wrap (skippedContact) =>
-      user = new User({ _id: skippedContact.trialRequest.applicant })
-      index = _.findIndex(@skippedContacts, (s) -> s._id is skippedContact._id)
-      yield user.fetch()
-      @$store.commit('page/addUser', { skippedContact , user: user.toJSON() })
+      userHandle = skippedContact.trialRequest.applicant
+      return unless userHandle
+      user = yield api.users.getByHandle(userHandle).then((r) -> r.json())
+      @$store.commit('page/addUser', { skippedContact , user })
 
 store = require('core/store')
 
@@ -140,7 +137,8 @@ module.exports = class SkippedContactsView extends RootVue
       users: {}
     actions:
       archiveContact: ({ commit, state }, {skippedContact, archived}) ->
-        skippedContactApi.setArchived(skippedContact._id, archived).then ->
+        newContact = _.assign({}, skippedContact, {archived})
+        api.skippedContacts.put(newContact).then ->
           commit('archiveContact', {skippedContact, archived})
     mutations:
       archiveContact: (state, { skippedContact, archived }) ->
