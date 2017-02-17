@@ -1,18 +1,7 @@
 RootVue = require 'views/core/RootVue'
 template = require 'templates/base-flat'
 require('vendor/co')
-# TODO: Include vue, vuex in vendor
-require('vendor/vue')
-require('vendor/vuex')
 api = require 'core/api'
-
-skippedContactApi =
-  setArchived: (_id, archived) ->
-    # TODO: Move this to a general API folder
-    fetch('/db/skipped-contact/' + _id, { 
-      method: 'PUT',
-      json: { _id, archived }
-    })
 
 SkippedContactInfo =
   template: require('templates/admin/skipped-contacts/skipped-contact-info')()
