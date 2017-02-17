@@ -21,4 +21,5 @@ module.exports = class RootVue extends RootView
     super(arguments...)
 
   destroy: ->
+    # TODO: Make sure this works when navigating from one RootVue to another
     store.unregisterModule('page')
