@@ -1,0 +1,95 @@
+#loading-error.text-center
+  div(v-if="error.stack")
+    h1(data-i18n="loading_error.unknown")
+
+  div(v-else-if="error.code === 401")
+    h1
+      span.spr 401:
+      span(data-i18n="loading_error.login_required")
+    p(data-i18n="loading_error.login_required_desc")
+    button.login-btn.btn.btn-primary(data-i18n="login.log_in")
+    button#create-account-btn.btn.btn-primary(data-i18n="login.sign_up")
+
+  // 402 currently not in use. TODO: Set it up
+  div(v-else-if="error.code === 402")
+    h2 402: Payment Required
+
+  div(v-else-if="error.code === 403")
+    h1
+      span.spr 403:
+      span(data-i18n="loading_error.forbidden") Forbidden
+    p(data-i18n="loading_error.forbidden_desc")
+
+    // this should make no diff... but sometimes the server returns 403 when it should return 401
+    button#logout-btn.btn.btn-primary(data-i18n="login.log_out", v-if="isAnonymous")
+
+  div(v-else-if="error.code === 404")
+    h1
+      span.spr 404:
+      span(data-i18n="loading_error.not_found")
+    - var num = Math.floor(Math.random() * 3) + 1;
+    img#not-found-img(src="/images/pages/not_found/404_#{num}.png")
+    p(data-i18n="loading_error.not_found_desc")
+
+  div(v-else-if="!error.code")
+    h1(data-i18n="loading_error.connection_failure")
+    p(data-i18n="loading_error.connection_failure_desc")
+
+  div(v-else-if="error.code === 408")
+    h1
+      span.spr 408:
+      span(data-i18n="loading_error.timeout")
+
+  div(v-else-if="error.code >= 500 && error.code <= 599")
+    h1
+      span.spr {{error.code}}
+      span(data-i18n="loading_error.server_error")
+
+  div(v-else)
+    h1(data-i18n="loading_error.unknown")
+
+    p(data-i18n="loading_error.general_desc")
+
+  #links-row.row
+    .col-sm-3
+      ul.list-unstyled
+        li
+          strong(data-i18n="common.help")
+        li
+          a(href="/", data-i18n="nav.home")
+        li
+          a(v-bind:href="forumLink", data-i18n="nav.forum")
+        li(v-if="isAnonymous")
+          a.contact-modal(tabindex=-1, data-i18n="nav.contact")
+        li
+          a(href='/community', data-i18n="nav.community")
+
+    .col-sm-3
+      ul.list-unstyled
+        li
+          strong(data-i18n="courses.students")
+        li
+          a(href="/students", data-i18n="nav.learn_to_code")
+        li(v-if="isAnonymous")
+          a.login-btn(data-i18n="login.log_in")
+        li
+          a(href="/students", data-i18n="courses.join_class")
+
+    .col-sm-3
+      ul.list-unstyled
+        li(v-if="isAnonymous")
+          a.login-btn(data-i18n="login.log_in")
+        li
+          a(href="/teachers/classes", data-i18n="nav.create_a_class")
+
+    .col-sm-3
+      ul.list-unstyled
+        li
+          strong(data-i18n="nav.other")
+        li
+          a(href="http://blog.codecombat.com/", data-i18n="nav.blog")
+        li
+          a(href="https://www.facebook.com/codecombat", data-i18n="nav.facebook")
+        li
+          a(href="https://twitter.com/codecombat", data-i18n="nav.twitter")
+

@@ -1,11 +1,11 @@
-fetch = require './fetch'
+fetchJson = require './fetch-json'
 
 module.exports = {
   fetchAll: (options) ->
-    fetch('/db/skipped-contact', options)
+    fetchJson('/db/skipped-contact', options)
 
   put: (skippedContact, options) ->
-    fetch("/db/skipped-contact/#{skippedContact._id}", _.assign({}, options, {
+    fetchJson("/db/skipped-contact/#{skippedContact._id}", _.assign({}, options, {
       method: 'PUT'
       json: skippedContact
     }))

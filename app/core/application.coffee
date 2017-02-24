@@ -51,6 +51,13 @@ Application = {
     
     Router = require('core/Router')
     @isProduction = -> document.location.href.search('https?://localhost') is -1
+
+    store = require('core/store')
+    me.on('change', ->
+      store.commit('me/updateUser', me.changedAttributes())
+    )
+    store.commit('me/updateUser', me.attributes)
+
     @isIPadApp = webkit?.messageHandlers? and navigator.userAgent?.indexOf('CodeCombat-iPad') isnt -1
     $('body').addClass 'ipad' if @isIPadApp
     $('body').addClass 'picoctf' if window.serverConfig.picoCTF

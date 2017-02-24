@@ -2,6 +2,7 @@ RootVue = require 'views/core/RootVue'
 template = require 'templates/base-flat'
 require('vendor/co')
 api = require 'core/api'
+FlatLayout = require 'core/components/FlatLayout'
 
 SkippedContactInfo =
   template: require('templates/admin/skipped-contacts/skipped-contact-info')()
@@ -103,15 +104,19 @@ SkippedContactsComponent = Vue.extend
     )
   components:
     'skipped-contact-info': SkippedContactInfo
+    'flat-layout': FlatLayout
   created: co.wrap ->
-    # TODO: Figure out how to generally handle network errors
-    skippedContacts = yield api.skippedContacts.fetchAll().then((r) -> r.json())
-    @$store.commit('page/loadContacts', skippedContacts)
-    yield skippedContacts.map co.wrap (skippedContact) =>
-      userHandle = skippedContact.trialRequest.applicant
-      return unless userHandle
-      user = yield api.users.getByHandle(userHandle).then((r) -> r.json())
-      @$store.commit('page/addUser', { skippedContact , user })
+    try
+      skippedContacts = yield api.skippedContacts.fetchAll()
+      skippedContacts = skippedContacts.slice(0,10) # Speed page load for testing. TODO: Remove
+      @$store.commit('page/loadContacts', skippedContacts)
+      yield skippedContacts.map co.wrap (skippedContact) =>
+        userHandle = skippedContact.trialRequest.applicant
+        return unless userHandle
+        user = yield api.users.getByHandle(userHandle)
+        @$store.commit('page/addUser', { skippedContact , user })
+    catch e
+      @$store.commit('addPageError', e)
 
 store = require('core/store')
 
